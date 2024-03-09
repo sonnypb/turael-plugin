@@ -6,6 +6,7 @@ Features to add:
 - Calc chance of desired task
 - Store dryest value for task
 - How does it work when doing slayer regularly? What about skipping a task with slayer points?
+- Update name (Task Dry Counter ?)
 
 Completed Features:
 - Ability to choose what your desired task is
