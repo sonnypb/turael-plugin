@@ -78,7 +78,6 @@ public class TuraelCounterPlugin extends Plugin
 		loadConfiguredTasks();
 		removeUndesiredTasks();
 		streakReset = config.streakReset();
-		log.info("this is streak reset" + streakReset);
 	}
 
 	@Override
