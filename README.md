@@ -1,14 +1,24 @@
 # Turael Skipping Counter
-A counter plugin to track drystreaks since desired slayer task
+A counter plugin to track drystreaks since desired Slayer task
 
 Features to add:
-- Fix infobox load on turael reset 
-- Calc chance of desired task
+- Fix infobox to load on task reset, rather than being permanently active
+
 - Store dryest value for task
-- How does it work when doing slayer regularly? What about skipping a task with slayer points?
+
+- Add check that dry counter can only increment when an option for desired task is selected
+  
+- Calc chance of desired task
+  - This could be printed in chatbox
+
 - Update name (Task Dry Counter ?)
+  
+- How does it work when doing slayer regularly?
+  - Currently does not increment count when you complete a regular slayer task, only when you reset your slayer task. Is there a way around this?
+  - What about skipping a task with slayer points?
+
 
 Completed Features:
 - Ability to choose what your desired task is
-- Counter colour depending on how dry you are for task (Needs testing)
-- Track reset count between sessions (Pulls null on first attempt)
+- Counter colour depending on how dry you are for task
+- Track reset count between sessions
