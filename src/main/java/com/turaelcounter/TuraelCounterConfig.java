@@ -111,7 +111,7 @@ public interface TuraelCounterConfig extends Config
 			section = taskSection,
 			hidden = true
 	)
-	int streakReset();
+	Integer streakReset();
 
 	@ConfigItem(
 			keyName = "streakReset",
@@ -119,6 +119,6 @@ public interface TuraelCounterConfig extends Config
 			description = "",
 			section = taskSection
 	)
-	void streakReset(int streakReset);
+	void streakReset(Integer streakReset);
 
 }

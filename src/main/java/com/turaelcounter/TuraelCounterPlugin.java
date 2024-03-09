@@ -33,12 +33,19 @@ import java.util.HashSet;
 )
 public class TuraelCounterPlugin extends Plugin
 {
-	private Counter counter;
+	private Integer streakReset = 0;
+
 	@Inject
 	private Client client;
 
 	@Inject
 	private TuraelCounterConfig config;
+
+	@Provides
+	TuraelCounterConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(TuraelCounterConfig.class);
+	}
 
 	@Inject
 	private InfoBoxManager infoBoxManager;
@@ -53,8 +60,6 @@ public class TuraelCounterPlugin extends Plugin
 
 	@Inject
 	private SkillIconManager skillIconManager;
-
-	private int streakReset = 0;
 
 	private int streakVarbit = Varbits.SLAYER_TASK_STREAK;
 
@@ -73,19 +78,21 @@ public class TuraelCounterPlugin extends Plugin
 		loadConfiguredTasks();
 		removeUndesiredTasks();
 		streakReset = config.streakReset();
+		log.info("this is streak reset" + streakReset);
 	}
 
 	@Override
 	protected void shutDown()
 	{
+		if (streakReset == null)
+		{
+			config.streakReset(0);
+		}
+		else
+		{
+			config.streakReset(streakReset);
+		}
 		infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
-		config.streakReset(streakReset);
-	}
-
-	@Provides
-	TuraelCounterConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(TuraelCounterConfig.class);
 	}
 
 	private void updateStreakResetCount()
@@ -102,10 +109,8 @@ public class TuraelCounterPlugin extends Plugin
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
 		int varbitId = varbitChanged.getVarbitId();
-//		value for the task
 		int slayerTaskCreature = client.getVarpValue(VarPlayer.SLAYER_TASK_CREATURE);
 
-//		this gives name of the task
 		String taskName;
 		taskName = client.getEnum(EnumID.SLAYER_TASK_CREATURE)
 				.getStringValue(slayerTaskCreature);
@@ -141,38 +146,39 @@ public class TuraelCounterPlugin extends Plugin
 		return streakReset;
 	}
 
+//	values correspond to slayer task id
 	public void loadConfiguredTasks()
 	{
 		if (config.isAbyssalDemonDesired()) {
-			desiredTaskSet.add(42); // Abyssal Demon task ID
+			desiredTaskSet.add(42);
 		}
 
 		if (config.isSmokeDevilDesired()) {
-			desiredTaskSet.add(95); // Smoke Devils task ID
+			desiredTaskSet.add(95);
 		}
 
 		if (config.isTzKalZukDesired()) {
-			desiredTaskSet.add(105); // TzKal-Zuk task ID
+			desiredTaskSet.add(105);
 		}
 
 		if (config.isHellhoundDesired()) {
-			desiredTaskSet.add(31); // Hellhounds task ID
+			desiredTaskSet.add(31);
 		}
 
 		if (config.isGargoyleDesired()) {
-			desiredTaskSet.add(46); // Gargoyles task ID
+			desiredTaskSet.add(46);
 		}
 
 		if (config.isLizardmenDesired()) {
-			desiredTaskSet.add(90); // Lizardmen task ID
+			desiredTaskSet.add(90);
 		}
 
 		if (config.isRevenantDesired()) {
-			desiredTaskSet.add(107); // Revenants task ID
+			desiredTaskSet.add(107);
 		}
 
 		if (config.isHydraDesired()) {
-			desiredTaskSet.add(113); // Hydras task ID
+			desiredTaskSet.add(113);
 		}
 
 	}
@@ -190,27 +196,27 @@ public class TuraelCounterPlugin extends Plugin
 		}
 
 		if (!config.isTzKalZukDesired()) {
-			desiredTaskSet.remove(105); // TzKal-Zuk task ID
+			desiredTaskSet.remove(105);
 		}
 
 		if (!config.isHellhoundDesired()) {
-			desiredTaskSet.remove(31); // Hellhounds task ID
+			desiredTaskSet.remove(31);
 		}
 
 		if (!config.isGargoyleDesired()) {
-			desiredTaskSet.remove(46); // Gargoyles task ID
+			desiredTaskSet.remove(46);
 		}
 
 		if (!config.isLizardmenDesired()) {
-			desiredTaskSet.remove(90); // Lizardmen task ID
+			desiredTaskSet.remove(90);
 		}
 
 		if (!config.isRevenantDesired()) {
-			desiredTaskSet.remove(107); // Revenants task ID
+			desiredTaskSet.remove(107);
 		}
 
 		if (!config.isHydraDesired()) {
-			desiredTaskSet.remove(113); // Hydras task ID
+			desiredTaskSet.remove(113);
 		}
 	}
 

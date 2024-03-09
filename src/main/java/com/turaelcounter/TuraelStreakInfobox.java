@@ -21,14 +21,13 @@ public class TuraelStreakInfobox extends InfoBox {
     @Override
     public String getText()
     {
-        if (plugin != null)
+        Integer value = plugin.getStreakReset();
+
+        if (value == null)
         {
-            return String.valueOf(plugin.getStreakReset());
+            return "0";
         }
-        else
-        {
-            return "n/a";
-        }
+        return String.valueOf(plugin.getStreakReset());
     }
 
     @Override
