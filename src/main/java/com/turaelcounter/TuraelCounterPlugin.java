@@ -31,8 +31,8 @@ import java.util.HashSet;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Turael Counter",
-	description = "Counts streak resets"
+	name = "Turael Reset Counter",
+	description = "Counts slayer streak resets"
 )
 public class TuraelCounterPlugin extends Plugin
 {
@@ -61,14 +61,9 @@ public class TuraelCounterPlugin extends Plugin
 	@Inject
 	private ItemManager itemManager;
 
-	@Inject
-	private SkillIconManager skillIconManager;
-
 	private int streakVarbit = Varbits.SLAYER_TASK_STREAK;
 
 	private int previousStreakValue = -1;
-
-	private int overlayVisible;
 
 	private HashSet<Integer> desiredTaskSet = new HashSet<Integer>();
 
@@ -76,10 +71,11 @@ public class TuraelCounterPlugin extends Plugin
 
 	private Instant infoTimer;
 
+	private boolean isInfoboxCreated = false;
+
 	@Override
 	protected void startUp()
 	{
-//		infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
 		loadConfiguredTasks();
 		removeUndesiredTasks();
 		streakReset = config.streakReset();
@@ -99,16 +95,6 @@ public class TuraelCounterPlugin extends Plugin
 		infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
 	}
 
-	private void updateStreakResetCount()
-	{
-		streakReset++;
-	}
-
-	private void resetStreakCounter()
-	{
-		streakReset = 0;
-	}
-
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
@@ -124,10 +110,17 @@ public class TuraelCounterPlugin extends Plugin
 		{
 			int currentStreakValue = client.getVarbitValue(Varbits.SLAYER_TASK_STREAK);
 
-			if (previousStreakValue != 0 && currentStreakValue < previousStreakValue) {
-				updateStreakResetCount();
-				infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
+			if (previousStreakValue != 0 && currentStreakValue < previousStreakValue)
+			{
+				streakReset++;
 				infoTimer = Instant.now();
+
+				if (!isInfoboxCreated)
+				{
+					infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
+					isInfoboxCreated = true;
+				}
+
 			}
 			previousStreakValue = currentStreakValue;
 		}
@@ -136,9 +129,10 @@ public class TuraelCounterPlugin extends Plugin
 		{
 			log.info("Desired task achieved, resetting streak count");
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", taskName + " task obtained in " + streakReset + " tasks!", null);
-			resetStreakCounter();
+			streakReset = 0;
 			isStreakReset = true;
 			infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
+			isInfoboxCreated = false;
 		}
 
 		if (!desiredTaskSet.contains(slayerTaskCreature))
@@ -153,7 +147,7 @@ public class TuraelCounterPlugin extends Plugin
 		return streakReset;
 	}
 
-//	values correspond to slayer task id
+//	value corresponds to slayer task id
 	public void loadConfiguredTasks()
 	{
 		if (config.isAbyssalDemonDesired()) {
