@@ -5,9 +5,6 @@ Features to add:
 - Store dryest value for task
 
 - Add check that dry counter can only increment when an option for desired task is selected
-  
-- Calc chance of desired task
-  - This could be printed in chatbox
 
 - Update name (Task Dry Counter ?)
   
