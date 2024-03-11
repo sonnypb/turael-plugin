@@ -2,6 +2,8 @@ package com.turaelcounter;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.VarbitChanged;
@@ -22,6 +24,7 @@ import java.util.HashSet;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.ChatMessageType;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.api.events.GameTick;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,10 +74,12 @@ public class TuraelCounterPlugin extends Plugin
 
 	private boolean isStreakReset = false;
 
+	private Instant infoTimer;
+
 	@Override
 	protected void startUp()
 	{
-		infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
+//		infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
 		loadConfiguredTasks();
 		removeUndesiredTasks();
 		streakReset = config.streakReset();
@@ -121,6 +126,8 @@ public class TuraelCounterPlugin extends Plugin
 
 			if (previousStreakValue != 0 && currentStreakValue < previousStreakValue) {
 				updateStreakResetCount();
+				infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
+				infoTimer = Instant.now();
 			}
 			previousStreakValue = currentStreakValue;
 		}
@@ -131,6 +138,7 @@ public class TuraelCounterPlugin extends Plugin
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", taskName + " task obtained in " + streakReset + " tasks!", null);
 			resetStreakCounter();
 			isStreakReset = true;
+			infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
 		}
 
 		if (!desiredTaskSet.contains(slayerTaskCreature))
@@ -226,7 +234,20 @@ public class TuraelCounterPlugin extends Plugin
 		removeUndesiredTasks();
 	}
 
+	@Subscribe
+	public void onGameTick(GameTick tick)
+	{
+		if (infoTimer != null && config.statTimeout() != 0)
+		{
+			Duration timeSinceInfobox = Duration.between(infoTimer, Instant.now());
+			Duration statTimeout = Duration.ofMinutes(config.statTimeout());
 
+			if (timeSinceInfobox.compareTo(statTimeout) >= 0)
+			{
+				infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
+			}
+		}
+	}
 }
 
 //Creature ID: 105, Name: TzKal-Zuk
