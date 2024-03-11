@@ -2,6 +2,8 @@ package com.turaelcounter;
 
 import com.google.inject.Provides;
 import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.VarbitChanged;
@@ -22,23 +24,31 @@ import java.util.HashSet;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.ChatMessageType;
 import net.runelite.client.util.ImageUtil;
+import net.runelite.api.events.GameTick;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Turael Counter",
-	description = "Counts streak resets"
+	name = "Turael Reset Counter",
+	description = "Counts slayer streak resets"
 )
 public class TuraelCounterPlugin extends Plugin
 {
-	private Counter counter;
+	private Integer streakReset = 0;
+
 	@Inject
 	private Client client;
 
 	@Inject
 	private TuraelCounterConfig config;
+
+	@Provides
+	TuraelCounterConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(TuraelCounterConfig.class);
+	}
 
 	@Inject
 	private InfoBoxManager infoBoxManager;
@@ -51,61 +61,50 @@ public class TuraelCounterPlugin extends Plugin
 	@Inject
 	private ItemManager itemManager;
 
-	@Inject
-	private SkillIconManager skillIconManager;
-
-	private int streakReset = 0;
-
 	private int streakVarbit = Varbits.SLAYER_TASK_STREAK;
 
 	private int previousStreakValue = -1;
-
-	private int overlayVisible;
 
 	private HashSet<Integer> desiredTaskSet = new HashSet<Integer>();
 
 	private boolean isStreakReset = false;
 
+	private Instant infoTimer;
+
+	private boolean isInfoboxCreated = false;
+
 	@Override
 	protected void startUp()
 	{
-		infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
 		loadConfiguredTasks();
 		removeUndesiredTasks();
 		streakReset = config.streakReset();
+		if (streakReset == null)
+		{
+			streakReset = 0;
+		}
 	}
 
 	@Override
 	protected void shutDown()
 	{
+		if (streakReset == null)
+		{
+			config.streakReset(0);
+		}
+		else
+		{
+			config.streakReset(streakReset);
+		}
 		infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
-		config.streakReset(streakReset);
-	}
-
-	@Provides
-	TuraelCounterConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(TuraelCounterConfig.class);
-	}
-
-	private void updateStreakResetCount()
-	{
-		streakReset++;
-	}
-
-	private void resetStreakCounter()
-	{
-		streakReset = 0;
 	}
 
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
 		int varbitId = varbitChanged.getVarbitId();
-//		value for the task
 		int slayerTaskCreature = client.getVarpValue(VarPlayer.SLAYER_TASK_CREATURE);
 
-//		this gives name of the task
 		String taskName;
 		taskName = client.getEnum(EnumID.SLAYER_TASK_CREATURE)
 				.getStringValue(slayerTaskCreature);
@@ -115,8 +114,17 @@ public class TuraelCounterPlugin extends Plugin
 		{
 			int currentStreakValue = client.getVarbitValue(Varbits.SLAYER_TASK_STREAK);
 
-			if (previousStreakValue != 0 && currentStreakValue < previousStreakValue) {
-				updateStreakResetCount();
+			if (previousStreakValue != 0 && currentStreakValue < previousStreakValue)
+			{
+				streakReset++;
+				infoTimer = Instant.now();
+
+				if (!isInfoboxCreated)
+				{
+					infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
+					isInfoboxCreated = true;
+				}
+
 			}
 			previousStreakValue = currentStreakValue;
 		}
@@ -125,8 +133,10 @@ public class TuraelCounterPlugin extends Plugin
 		{
 			log.info("Desired task achieved, resetting streak count");
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", taskName + " task obtained in " + streakReset + " tasks!", null);
-			resetStreakCounter();
+			streakReset = 0;
 			isStreakReset = true;
+			infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
+			isInfoboxCreated = false;
 		}
 
 		if (!desiredTaskSet.contains(slayerTaskCreature))
@@ -141,38 +151,39 @@ public class TuraelCounterPlugin extends Plugin
 		return streakReset;
 	}
 
+//	value corresponds to slayer task id
 	public void loadConfiguredTasks()
 	{
 		if (config.isAbyssalDemonDesired()) {
-			desiredTaskSet.add(42); // Abyssal Demon task ID
+			desiredTaskSet.add(42);
 		}
 
 		if (config.isSmokeDevilDesired()) {
-			desiredTaskSet.add(95); // Smoke Devils task ID
+			desiredTaskSet.add(95);
 		}
 
 		if (config.isTzKalZukDesired()) {
-			desiredTaskSet.add(105); // TzKal-Zuk task ID
+			desiredTaskSet.add(105);
 		}
 
 		if (config.isHellhoundDesired()) {
-			desiredTaskSet.add(31); // Hellhounds task ID
+			desiredTaskSet.add(31);
 		}
 
 		if (config.isGargoyleDesired()) {
-			desiredTaskSet.add(46); // Gargoyles task ID
+			desiredTaskSet.add(46);
 		}
 
 		if (config.isLizardmenDesired()) {
-			desiredTaskSet.add(90); // Lizardmen task ID
+			desiredTaskSet.add(90);
 		}
 
 		if (config.isRevenantDesired()) {
-			desiredTaskSet.add(107); // Revenants task ID
+			desiredTaskSet.add(107);
 		}
 
 		if (config.isHydraDesired()) {
-			desiredTaskSet.add(113); // Hydras task ID
+			desiredTaskSet.add(113);
 		}
 
 	}
@@ -190,27 +201,27 @@ public class TuraelCounterPlugin extends Plugin
 		}
 
 		if (!config.isTzKalZukDesired()) {
-			desiredTaskSet.remove(105); // TzKal-Zuk task ID
+			desiredTaskSet.remove(105);
 		}
 
 		if (!config.isHellhoundDesired()) {
-			desiredTaskSet.remove(31); // Hellhounds task ID
+			desiredTaskSet.remove(31);
 		}
 
 		if (!config.isGargoyleDesired()) {
-			desiredTaskSet.remove(46); // Gargoyles task ID
+			desiredTaskSet.remove(46);
 		}
 
 		if (!config.isLizardmenDesired()) {
-			desiredTaskSet.remove(90); // Lizardmen task ID
+			desiredTaskSet.remove(90);
 		}
 
 		if (!config.isRevenantDesired()) {
-			desiredTaskSet.remove(107); // Revenants task ID
+			desiredTaskSet.remove(107);
 		}
 
 		if (!config.isHydraDesired()) {
-			desiredTaskSet.remove(113); // Hydras task ID
+			desiredTaskSet.remove(113);
 		}
 	}
 
@@ -221,7 +232,20 @@ public class TuraelCounterPlugin extends Plugin
 		removeUndesiredTasks();
 	}
 
+	@Subscribe
+	public void onGameTick(GameTick tick)
+	{
+		if (infoTimer != null && config.statTimeout() != 0)
+		{
+			Duration timeSinceInfobox = Duration.between(infoTimer, Instant.now());
+			Duration statTimeout = Duration.ofMinutes(config.statTimeout());
 
+			if (timeSinceInfobox.compareTo(statTimeout) >= 0)
+			{
+				infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
+			}
+		}
+	}
 }
 
 //Creature ID: 105, Name: TzKal-Zuk

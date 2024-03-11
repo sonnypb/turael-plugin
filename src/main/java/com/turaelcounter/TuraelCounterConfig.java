@@ -4,6 +4,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Units;
 
 import java.nio.charset.StandardCharsets;
 
@@ -111,7 +112,7 @@ public interface TuraelCounterConfig extends Config
 			section = taskSection,
 			hidden = true
 	)
-	int streakReset();
+	Integer streakReset();
 
 	@ConfigItem(
 			keyName = "streakReset",
@@ -119,6 +120,29 @@ public interface TuraelCounterConfig extends Config
 			description = "",
 			section = taskSection
 	)
-	void streakReset(int streakReset);
+	void streakReset(Integer streakReset);
+
+//	@ConfigItem(
+//			position = 1,
+//			keyName = "infobox",
+//			name = "Task InfoBox",
+//			description = "Display task information in an InfoBox"
+//	)
+//	default boolean showInfobox()
+//	{
+//		return true;
+//	}
+
+	@ConfigItem(
+			position = 4,
+			keyName = "statTimeout",
+			name = "InfoBox Expiry",
+			description = "Set the time until the InfoBox expires"
+	)
+	@Units(Units.MINUTES)
+	default int statTimeout()
+	{
+		return 5;
+	}
 
 }
