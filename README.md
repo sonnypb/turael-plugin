@@ -2,6 +2,8 @@
 A counter plugin to track drystreaks since desired Slayer task
 
 Features to add:
+- Track time spent skipping as an option, track total tasks skipped
+  
 - Store dryest value for task
 
 - Add check that dry counter can only increment when an option for desired task is selected
