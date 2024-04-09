@@ -1,12 +1,14 @@
 package com.turaelcounter;
 
+import net.runelite.api.ChatMessageType;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Units;
+import java.time.Duration;
 
-import java.nio.charset.StandardCharsets;
+
 
 @ConfigGroup("turaelcounter")
 public interface TuraelCounterConfig extends Config
@@ -122,16 +124,39 @@ public interface TuraelCounterConfig extends Config
 	)
 	void streakReset(Integer streakReset);
 
-//	@ConfigItem(
-//			position = 1,
-//			keyName = "infobox",
-//			name = "Task InfoBox",
-//			description = "Display task information in an InfoBox"
-//	)
-//	default boolean showInfobox()
-//	{
-//		return true;
-//	}
+	@ConfigItem(
+			keyName = "totalTimeSpent",
+			name = "",
+			description = "",
+			section = taskSection,
+			hidden = true
+	)
+	Duration totalTimeSpent();
+
+	@ConfigItem(
+			keyName = "totalTimeSpent",
+			name = "",
+			description = "",
+			section = taskSection
+	)
+	void totalTimeSpent(Duration totalTimeSpent);
+
+	@ConfigItem(
+			keyName = "turaelTasksCompleted",
+			name = "",
+			description = "",
+			section = taskSection,
+			hidden = true
+	)
+	Integer turaelTasksCompleted();
+
+	@ConfigItem(
+			keyName = "turaelTasksCompleted",
+			name = "",
+			description = "",
+			section = taskSection
+	)
+	void turaelTasksCompleted(Integer turaelTasksCompleted);
 
 	@ConfigItem(
 			position = 4,
@@ -144,5 +169,66 @@ public interface TuraelCounterConfig extends Config
 	{
 		return 5;
 	}
+
+	@ConfigItem(
+			position = 5,
+			keyName = "turaelTimeTracking",
+			name = "Turael Skipping Time",
+			description = "Show time spent turael skipping"
+	)
+	default boolean isTimeTrackingDesired()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			position = 6,
+			keyName = "turaelTasksTracking",
+			name = "Total Turael Tasks",
+			description = "Show tasks completed while turael skipping"
+	)
+	default boolean isTaskTrackingDesired()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+			keyName = "turaelDuration",
+			name = "",
+			description = "",
+			section = taskSection,
+			hidden = true
+	)
+	Duration turaelDuration();
+
+	@ConfigItem(
+			keyName = "turaelDuration",
+			name = "",
+			description = "",
+			section = taskSection,
+			hidden = true
+	)
+	void turaelDuration(Duration turaelDuration);
+
+	@ConfigItem(
+			keyName = "turaelTimerState",
+			name = "",
+			description = "",
+			section = taskSection,
+			hidden = true
+	)
+	TimerHandler.TimerState turaelTimerState();
+
+	@ConfigItem(
+			keyName = "turaelTimerState",
+			name = "",
+			description = "",
+			section = taskSection,
+			hidden = true
+	)
+	void turaelTimerState(TimerHandler.TimerState turaelTimerState);
+
+
+
 
 }
