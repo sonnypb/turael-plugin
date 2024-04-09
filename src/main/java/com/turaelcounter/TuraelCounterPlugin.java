@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
+import lombok.Getter;
 import net.runelite.api.*;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.config.ConfigManager;
@@ -25,9 +26,13 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.ChatMessageType;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.api.events.GameTick;
-
+import net.runelite.api.events.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import static net.runelite.api.Skill.SLAYER;
+import net.runelite.client.eventbus.EventBus;
+
+
 
 @Slf4j
 @PluginDescriptor(
@@ -37,6 +42,8 @@ import java.util.HashSet;
 public class TuraelCounterPlugin extends Plugin
 {
 	private Integer streakReset = 0;
+
+	private Integer turaelTasksCompleted = 0;
 
 	@Inject
 	private Client client;
@@ -71,7 +78,28 @@ public class TuraelCounterPlugin extends Plugin
 
 	private Instant infoTimer;
 
+	private boolean isTimeTrackerActive = false;
+
+	@Inject
+	private TimerHandler totalTimer;
+
+	@Inject
+	private TimerHandler sessionTimer;
+
+	@Inject
+	private TimerHandler afkkTimer;
+
+	private Instant timeTracker;
+	private Instant pauseSessionTimer;
+	private Instant afkTimer;
+	private Instant elapsedAfkTimerStart;
+	private boolean isPauseSessionActive = false;
+	private Duration sessionTimeSpent = Duration.ZERO;
+	private Duration totalTimeSpent = Duration.ZERO;
+	private Duration totalPausedTime = Duration.ZERO;
+
 	private boolean isInfoboxCreated = false;
+
 
 	@Override
 	protected void startUp()
@@ -79,10 +107,34 @@ public class TuraelCounterPlugin extends Plugin
 		loadConfiguredTasks();
 		removeUndesiredTasks();
 		streakReset = config.streakReset();
+		totalTimeSpent = config.totalTimeSpent();
+		turaelTasksCompleted = config.turaelTasksCompleted();
+		log.info("Total time spent on startup: " + totalTimeSpent);
+		log.info("Turael tasks completed on startup: " + turaelTasksCompleted);
+
+//		wider range of tasks for testing purposes, remove once done testing
+		desiredTaskSet.add(92);
+		desiredTaskSet.add(35);
+		desiredTaskSet.add(49);
+		desiredTaskSet.add(111);
+		desiredTaskSet.add(112);
+		desiredTaskSet.add(48);
+
 		if (streakReset == null)
 		{
 			streakReset = 0;
 		}
+
+		if (totalTimeSpent == null)
+		{
+			totalTimeSpent = Duration.ZERO;
+		}
+
+		if (turaelTasksCompleted == null)
+		{
+			turaelTasksCompleted = 0;
+		}
+
 	}
 
 	@Override
@@ -96,7 +148,30 @@ public class TuraelCounterPlugin extends Plugin
 		{
 			config.streakReset(streakReset);
 		}
+
+		if (totalTimeSpent == null)
+		{
+			config.totalTimeSpent(Duration.ZERO);
+		}
+		else
+		{
+			config.totalTimeSpent(totalTimeSpent);
+		}
+
+		if (turaelTasksCompleted == null)
+		{
+			config.turaelTasksCompleted(0);
+		}
+		else
+		{
+			config.turaelTasksCompleted(turaelTasksCompleted);
+		}
+
+		log.info("Total time spent on shutdown: " + totalTimeSpent);
+		log.info("Turael tasks completed on shutdown: " + turaelTasksCompleted);
+
 		infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
+
 	}
 
 	@Subscribe
@@ -104,12 +179,9 @@ public class TuraelCounterPlugin extends Plugin
 	{
 		int varbitId = varbitChanged.getVarbitId();
 		int slayerTaskCreature = client.getVarpValue(VarPlayer.SLAYER_TASK_CREATURE);
+		String taskName = client.getEnum(EnumID.SLAYER_TASK_CREATURE).getStringValue(slayerTaskCreature);
 
-		String taskName;
-		taskName = client.getEnum(EnumID.SLAYER_TASK_CREATURE)
-				.getStringValue(slayerTaskCreature);
-
-
+		//on task reset
 		if (varbitId == streakVarbit)
 		{
 			int currentStreakValue = client.getVarbitValue(Varbits.SLAYER_TASK_STREAK);
@@ -117,6 +189,7 @@ public class TuraelCounterPlugin extends Plugin
 			if (previousStreakValue != 0 && currentStreakValue < previousStreakValue)
 			{
 				streakReset++;
+				turaelTasksCompleted++;
 				infoTimer = Instant.now();
 
 				if (!isInfoboxCreated)
@@ -125,25 +198,138 @@ public class TuraelCounterPlugin extends Plugin
 					isInfoboxCreated = true;
 				}
 
+				if (!isTimeTrackerActive)
+				{
+//					start total timer
+					log.info("total timer started");
+					totalTimer.timerStarted();
+
+//					start session timer
+					log.info("session timer started");
+					sessionTimer.timerStarted();
+
+					isTimeTrackerActive = true;
+				}
+
 			}
 			previousStreakValue = currentStreakValue;
 		}
 
-		if (desiredTaskSet.contains(slayerTaskCreature) && !isStreakReset)
+		//desired slayer task
+		if (desiredTaskSet.contains(slayerTaskCreature) && !isStreakReset && isTimeTrackerActive)
 		{
-			log.info("Desired task achieved, resetting streak count");
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", taskName + " task obtained in " + streakReset + " tasks!", null);
 			streakReset = 0;
 			isStreakReset = true;
 			infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
 			isInfoboxCreated = false;
-		}
+			isTimeTrackerActive = false;
 
+			//end total timer
+			totalTimer.timerStopped();
+
+			//end session timer
+			sessionTimer.timerStopped();
+
+			//save the config values
+//			saveConfigValues();
+
+			if (config.isTaskTrackingDesired())
+			{
+				printTuraelTasksMessages();
+			}
+
+			if (config.isTimeTrackingDesired())
+			{
+				printTimeSpentMessages();
+			}
+
+			//reset the session timer, so it can be used for multiple sessions
+			sessionTimer.timerReset();
+
+		}
+//		ensures task selection is required
 		if (!desiredTaskSet.contains(slayerTaskCreature))
 		{
 			isStreakReset = false;
 		}
+	}
 
+	@Subscribe
+	public void onGameStateChanged(GameStateChanged gameStateChanged) {
+		switch (gameStateChanged.getGameState()){
+
+			case LOGIN_SCREEN:
+
+				//end timer on logout for test purposes (this should be changed to pause timer)
+				totalTimer.timerStopped();
+				log.info("total timer stopped");
+
+				if (isTimeTrackerActive)
+				{
+					isPauseSessionActive = true;
+				}
+				break;
+
+			case LOGGED_IN:
+
+				if (isPauseSessionActive)
+				{
+					isPauseSessionActive = false;
+				}
+				break;
+		}
+	}
+
+	@Subscribe
+	public void onStatChanged(StatChanged statChanged)
+	{
+		if (statChanged.getSkill() != SLAYER)
+		{
+			return;
+		}
+
+		if (isTimeTrackerActive)
+		{
+			log.info("afk timer started");
+			elapsedAfkTimerStart = Instant.now();
+		}
+	}
+
+
+	public void printTimeSpentMessages()
+	{
+//		long sessionHours = sessionTimeSpent.toHours();
+//		long sessionMinutes = sessionTimeSpent.minusHours(sessionHours).toMinutes();
+//		long sessionSeconds = sessionTimeSpent.minusHours(sessionHours).minusMinutes(sessionMinutes).getSeconds();
+//
+//		long totalHours = totalTimeSpent.toHours();
+//		long totalMinutes = totalTimeSpent.minusHours(totalHours).toMinutes();
+//		long totalSeconds = totalTimeSpent.minusHours(totalHours).minusMinutes(totalMinutes).getSeconds();
+
+//		get session and total duration times
+//		this works as expected, just need to convert the time
+		Duration totalDuration = totalTimer.getDuration();
+		Duration sessionDuration = sessionTimer.getDuration();
+
+//		isn't converted but can be done later
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Session time spent Turael skipping: " + sessionDuration, null);
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Total time spent Turael skipping: " + totalDuration, null);
+
+//		String sessionDurationString = (sessionHours > 0) ? sessionHours + " hours, " + sessionMinutes + " minutes, and " + sessionSeconds + " seconds" : sessionMinutes + " minutes and " + sessionSeconds + " seconds";
+//		String totalDurationString = (totalHours > 0) ? totalHours + " hours, " + totalMinutes + " minutes, and " + totalSeconds + " seconds" : totalMinutes + " minutes and " + totalSeconds + " seconds";
+
+	}
+
+	public void printTuraelTasksMessages()
+	{
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Total Turael tasks completed: " + turaelTasksCompleted, null);
+	}
+
+	public void saveConfigValues()
+	{
+		config.totalTimeSpent(totalTimeSpent);
+		config.turaelTasksCompleted(turaelTasksCompleted);
 	}
 
 	public int getStreakReset()
@@ -151,7 +337,54 @@ public class TuraelCounterPlugin extends Plugin
 		return streakReset;
 	}
 
-//	value corresponds to slayer task id
+
+//infobox and afk timer
+@Subscribe
+public void onGameTick(GameTick tick) {
+
+	if (infoTimer != null && config.statTimeout() != 0)
+	{
+		Duration timeSinceInfobox = Duration.between(infoTimer, Instant.now());
+		Duration statTimeout = Duration.ofMinutes(config.statTimeout());
+
+		if (timeSinceInfobox.compareTo(statTimeout) >= 0)
+		{
+			infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
+			isInfoboxCreated = false;
+		}
+	}
+
+	if (isTimeTrackerActive && elapsedAfkTimerStart != null)
+	{
+		Duration elapsedAfkTime = Duration.between(elapsedAfkTimerStart, Instant.now());
+
+		if (elapsedAfkTime.compareTo(Duration.ofMinutes(1)) > 0)
+		{
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "AFK timer reached, ending Turael session", null);
+			log.info("1 minutes of slayer afk is reached");
+			isTimeTrackerActive = false;
+
+			//stop all timers
+			sessionTimer.timerStopped();
+			totalTimer.timerStopped();
+			elapsedAfkTimerStart = null;
+
+			if (config.isTaskTrackingDesired())
+			{
+				printTuraelTasksMessages();
+			}
+
+			if (config.isTimeTrackingDesired())
+			{
+				printTimeSpentMessages();
+			}
+
+			//reset the session timer, so it can be used for multiple sessions
+			sessionTimer.timerReset();
+		}
+	}
+}
+	//	value corresponds to slayer task id - needs cleaning up
 	public void loadConfiguredTasks()
 	{
 		if (config.isAbyssalDemonDesired()) {
@@ -231,154 +464,29 @@ public class TuraelCounterPlugin extends Plugin
 		loadConfiguredTasks();
 		removeUndesiredTasks();
 	}
-
-	@Subscribe
-	public void onGameTick(GameTick tick)
-	{
-		if (infoTimer != null && config.statTimeout() != 0)
-		{
-			Duration timeSinceInfobox = Duration.between(infoTimer, Instant.now());
-			Duration statTimeout = Duration.ofMinutes(config.statTimeout());
-
-			if (timeSinceInfobox.compareTo(statTimeout) >= 0)
-			{
-				infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
-			}
-		}
-	}
 }
 
-//Creature ID: 105, Name: TzKal-Zuk
+
 
 //		slayer id info
-
-//Turael tasks
-//Creature ID: 1, Name: Monkeys
-//Creature ID: 2, Name: Goblins
-//Creature ID: 3, Name: Rats
-//Creature ID: 4, Name: Spiders
-//Creature ID: 5, Name: Birds
-//Creature ID: 6, Name: Cows
-//Creature ID: 7, Name: Scorpions
-//Creature ID: 8, Name: Bats
-//Creature ID: 9, Name: Wolves
-//Creature ID: 10, Name: Zombies
-//Creature ID: 11, Name: Skeletons
-//Creature ID: 12, Name: Ghosts
-//Creature ID: 13, Name: Bears
-//Creature ID: 39, Name: Crawling Hands
-//Creature ID: 37, Name: Cave Crawlers
-//Creature ID: 38, Name: Banshees
-//Creature ID: 53, Name: Kalphite
-//Creature ID: 62, Name: Cave Slimes
-//Creature ID: 63, Name: Cave Bugs
-//Creature ID: 37, Name: Cave Crawlers
-//Creature ID: 76, Name: Minotaurs
-//Creature ID: 121, Name: Sourhogs
-//Creature ID: 57, Name: Dwarves
-//Creature ID: 68, Name: Lizards
-
-//Creature ID: 14, Name: Hill Giants
-//Creature ID: 15, Name: Ice Giants
-//Creature ID: 16, Name: Fire Giants
-//Creature ID: 17, Name: Moss Giants
-//Creature ID: 18, Name: Trolls
-//Creature ID: 19, Name: Ice Warriors
-//Creature ID: 20, Name: Ogres
-//Creature ID: 21, Name: Hobgoblins
-//Creature ID: 22, Name: Dogs
-//Creature ID: 23, Name: Ghouls
-//Creature ID: 24, Name: Green Dragons
-//Creature ID: 25, Name: Blue Dragons
-//Creature ID: 26, Name: Red Dragons
-//Creature ID: 27, Name: Black Dragons
-//Creature ID: 28, Name: Lesser Demons
-//Creature ID: 29, Name: Greater Demons
-//Creature ID: 30, Name: Black Demons
 //Creature ID: 31, Name: Hellhounds
-//Creature ID: 32, Name: Shadow Warriors
-//Creature ID: 33, Name: Werewolves
-//Creature ID: 34, Name: Vampyres
 //Creature ID: 35, Name: Dagannoth
-//Creature ID: 36, Name: Turoth
-
-//Creature ID: 40, Name: Infernal Mages
-//Creature ID: 41, Name: Aberrant Spectres
 //Creature ID: 42, Name: Abyssal Demons
-//Creature ID: 43, Name: Basilisks
-//Creature ID: 44, Name: Cockatrice
-//Creature ID: 45, Name: Kurask
-//Creature ID: 46, Name: Gargoyles
-//Creature ID: 47, Name: Pyrefiends
 //Creature ID: 48, Name: Bloodveld
 //Creature ID: 49, Name: Dust Devils
-//Creature ID: 50, Name: Jellies
-//Creature ID: 51, Name: Rockslugs
-//Creature ID: 52, Name: Nechryael
-//Creature ID: 54, Name: Earth Warriors
-//Creature ID: 55, Name: Otherworldly Beings
-//Creature ID: 56, Name: Elves
 
-//Creature ID: 58, Name: Bronze Dragons
-//Creature ID: 59, Name: Iron Dragons
-//Creature ID: 60, Name: Steel Dragons
-//Creature ID: 61, Name: Wall Beasts
-
-//Creature ID: 64, Name: Shades
-//Creature ID: 65, Name: Crocodiles
-//Creature ID: 66, Name: Dark Beasts
-//Creature ID: 67, Name: Mogres
-//Creature ID: 69, Name: Fever Spiders
-//Creature ID: 70, Name: Harpie Bug Swarms
-//Creature ID: 71, Name: Sea Snakes
-//Creature ID: 72, Name: Skeletal Wyverns
-//Creature ID: 73, Name: Killerwatts
-//Creature ID: 74, Name: Mutated Zygomites
-//Creature ID: 75, Name: Icefiends
-//Creature ID: 77, Name: Fleshcrawlers
-//Creature ID: 78, Name: Catablepon
-//Creature ID: 79, Name: Ankou
-//Creature ID: 80, Name: Cave Horrors
-//Creature ID: 81, Name: Jungle Horrors
-//Creature ID: 82, Name: Goraks
-//Creature ID: 83, Name: Suqahs
-//Creature ID: 84, Name: Brine Rats
-//Creature ID: 85, Name: Minions of Scabaras
-//Creature ID: 86, Name: Terror Dogs
-//Creature ID: 87, Name: Molanisks
-//Creature ID: 88, Name: Waterfiends
-//Creature ID: 89, Name: Spiritual Creatures
 //Creature ID: 90, Name: Lizardmen
-//Creature ID: 91, Name: Magic Axes
 //Creature ID: 92, Name: Cave Kraken
-//Creature ID: 93, Name: Mithril Dragons
 //Creature ID: 94, Name: Aviansies
 //Creature ID: 95, Name: Smoke Devils
 //Creature ID: 96, Name: TzHaar
 //Creature ID: 97, Name: TzTok-Jad
 //Creature ID: 98, Name: Bosses
-//Creature ID: 99, Name: Mammoths
-//Creature ID: 100, Name: Rogues
-//Creature ID: 101, Name: Ents
-//Creature ID: 102, Name: Bandits
-//Creature ID: 103, Name: Dark Warriors
-//Creature ID: 104, Name: Lava Dragons
 //Creature ID: 105, Name: TzKal-Zuk
-//Creature ID: 106, Name: Fossil Island Wyverns
 //Creature ID: 107, Name: Revenants
-//Creature ID: 108, Name: Adamant Dragons
-//Creature ID: 109, Name: Rune Dragons
-//Creature ID: 110, Name: Chaos Druids
 //Creature ID: 111, Name: Wyrms
 //Creature ID: 112, Name: Drakes
 //Creature ID: 113, Name: Hydras
-//Creature ID: 114, Name: Temple Spiders
-//Creature ID: 115, Name: Undead Druids
-//Creature ID: 116, Name: Sulphur Lizards
-//Creature ID: 117, Name: Brutal Black Dragons
-//Creature ID: 118, Name: Sand Crabs
-//Creature ID: 119, Name: Black Knights
-//Creature ID: 120, Name: Pirates
+//nechryaels ?
 
-//Creature ID: 122, Name: Warped Creatures
 
