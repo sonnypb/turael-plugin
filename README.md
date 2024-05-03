@@ -1,9 +1,12 @@
 # Turael Skipping Counter
 A counter plugin to track drystreaks since desired Slayer task
 
-https://imgur.com/a/Fflrz49
-https://imgur.com/a/zkBUaBs
-https://imgur.com/a/i3CJHw1
+![image](https://github.com/sonnypb/turael-plugin/assets/117116552/34213063-bc83-4286-ab3c-8be71149e627)
+
+![image](https://github.com/sonnypb/turael-plugin/assets/117116552/61cdfa05-c98c-4d88-a4db-cb058ceb659b)
+
+![image](https://github.com/sonnypb/turael-plugin/assets/117116552/e42fc8e1-4a8a-4c36-ab5a-99d8fbbea0be)
+
 
 Features to add:
 - Track time spent skipping as an option, track total tasks skipped
