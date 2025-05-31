@@ -7,7 +7,7 @@ public class SurgePotionReminderPluginTest
 {
 	public static void main(String[] args) throws Exception
 	{
-		ExternalPluginManager.loadBuiltin(ExamplePlugin.class);
+		ExternalPluginManager.loadBuiltin(SurgePotionReminderPlugin.class);
 		RuneLite.main(args);
 	}
 }

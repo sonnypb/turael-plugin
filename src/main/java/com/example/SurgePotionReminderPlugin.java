@@ -20,7 +20,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 )
 public class SurgePotionReminderPlugin extends Plugin
 {
-	private DeathChargeTimer timer = null;
+	private SurgePotionTimer timer = null;
 
 	private int overlayVisible;
 
@@ -36,17 +36,14 @@ public class SurgePotionReminderPlugin extends Plugin
 	@Inject
 	private Client client;
 
-	public static final Pattern DEATH_CHARGE_ACTIVE =
-			Pattern.compile("<col=[A-Fa-f\\d]+>Upon the death of your next foe, some of your special attack energy will be restored\\.</col>");
-
-	public static final Pattern UPGRADED_DEATH_CHARGE_ACTIVE =
-			Pattern.compile("<col=[A-Fa-f\\d]+>Upon the death of your next two foes, some of your special attack energy will be restored\\.</col>");
+	public static final Pattern SURGE_POTION_AVAILABLE =
+			Pattern.compile("<col=[A-Fa-f\\d]+>You now feel capable of drinking another dose of surge potion\\.</col>");
 
 	@Override
 	protected void startUp()
 	{
 		overlayVisible = -1;
-		timer = new DeathChargeTimer();
+		timer = new SurgePotionTimer();
 	}
 
 	@Override
@@ -59,7 +56,7 @@ public class SurgePotionReminderPlugin extends Plugin
 	@Provides
 	SurgePotionReminderConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(DeathChargeReminderConfig.class);
+		return configManager.getConfig(SurgePotionReminderConfig.class);
 	}
 
 	@Subscribe
@@ -67,9 +64,9 @@ public class SurgePotionReminderPlugin extends Plugin
 	{
 		final String message = event.getMessage();
 
-		if (message.matches(DEATH_CHARGE_ACTIVE.pattern()) || message.matches(UPGRADED_DEATH_CHARGE_ACTIVE.pattern()))
+		if (message.matches(SURGE_POTION_AVAILABLE.pattern()))
 		{
-			timer.start();
+			addOverlay();
 		}
 	}
 
