@@ -15,7 +15,7 @@ public class TuraelStreakInfobox extends InfoBox {
     {
         super(image, plugin);
         this.plugin = plugin;
-        setTooltip("Tasks since");
+        setTooltip("Tasks since: " + (plugin.getStreakReset() + 1));
     }
 
     @Override

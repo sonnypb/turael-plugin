@@ -36,8 +36,8 @@ import net.runelite.client.eventbus.EventBus;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Turael Reset Counter",
-	description = "Counts slayer streak resets"
+	name = "Turael Time Waster",
+	description = "Track slayer streak resets and time wasted skipping"
 )
 public class TuraelCounterPlugin extends Plugin
 {
@@ -99,6 +99,7 @@ public class TuraelCounterPlugin extends Plugin
 	private Duration totalPausedTime = Duration.ZERO;
 
 	private boolean isInfoboxCreated = false;
+	private int ticksSinceStartup = 0;
 
 
 	@Override
@@ -177,27 +178,37 @@ public class TuraelCounterPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged varbitChanged)
 	{
+
+		if (ticksSinceStartup < 5)
+		{
+			return;
+		}
+
 		int varbitId = varbitChanged.getVarbitId();
 		int slayerTaskCreature = client.getVarpValue(VarPlayer.SLAYER_TASK_CREATURE);
 		String taskName = client.getEnum(EnumID.SLAYER_TASK_CREATURE).getStringValue(slayerTaskCreature);
+
 
 		//on task reset
 		if (varbitId == streakVarbit)
 		{
 			int currentStreakValue = client.getVarbitValue(Varbits.SLAYER_TASK_STREAK);
 
+			// if the slayer streak is reset through turael
 			if (previousStreakValue != 0 && currentStreakValue < previousStreakValue)
 			{
 				streakReset++;
 				turaelTasksCompleted++;
 				infoTimer = Instant.now();
 
+				// create the infobox if it is not already created
 				if (!isInfoboxCreated)
 				{
 					infoBoxManager.addInfoBox(new TuraelStreakInfobox(itemManager.getImage(25912), this));
 					isInfoboxCreated = true;
 				}
 
+				// activate the timer if it is not already activated
 				if (!isTimeTrackerActive)
 				{
 //					start total timer
@@ -218,7 +229,7 @@ public class TuraelCounterPlugin extends Plugin
 		//desired slayer task
 		if (desiredTaskSet.contains(slayerTaskCreature) && !isStreakReset && isTimeTrackerActive)
 		{
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", taskName + " task obtained in " + streakReset + " tasks!", null);
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", taskName + " task obtained in " + (streakReset + 1) + " tasks!", null);
 			streakReset = 0;
 			isStreakReset = true;
 			infoBoxManager.removeIf(TuraelStreakInfobox.class::isInstance);
@@ -299,31 +310,20 @@ public class TuraelCounterPlugin extends Plugin
 
 	public void printTimeSpentMessages()
 	{
-//		long sessionHours = sessionTimeSpent.toHours();
-//		long sessionMinutes = sessionTimeSpent.minusHours(sessionHours).toMinutes();
-//		long sessionSeconds = sessionTimeSpent.minusHours(sessionHours).minusMinutes(sessionMinutes).getSeconds();
-//
-//		long totalHours = totalTimeSpent.toHours();
-//		long totalMinutes = totalTimeSpent.minusHours(totalHours).toMinutes();
-//		long totalSeconds = totalTimeSpent.minusHours(totalHours).minusMinutes(totalMinutes).getSeconds();
 
 //		get session and total duration times
 //		this works as expected, just need to convert the time
-		Duration totalDuration = totalTimer.getDuration();
-		Duration sessionDuration = sessionTimer.getDuration();
+		//Duration totalDuration = totalTimer.getDuration();
+		//Duration sessionDuration = sessionTimer.getDuration();
 
-//		isn't converted but can be done later
-		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Session time spent Turael skipping: " + sessionDuration, null);
-		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Total time spent Turael skipping: " + totalDuration, null);
-
-//		String sessionDurationString = (sessionHours > 0) ? sessionHours + " hours, " + sessionMinutes + " minutes, and " + sessionSeconds + " seconds" : sessionMinutes + " minutes and " + sessionSeconds + " seconds";
-//		String totalDurationString = (totalHours > 0) ? totalHours + " hours, " + totalMinutes + " minutes, and " + totalSeconds + " seconds" : totalMinutes + " minutes and " + totalSeconds + " seconds";
-
+		//converted
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Turael Session: " + sessionTimer.formatDuration(), null);
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Turael Total: " + totalTimer.formatDuration(), null);
 	}
 
 	public void printTuraelTasksMessages()
 	{
-		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Total Turael tasks completed: " + turaelTasksCompleted, null);
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",  "Total Skips: " + turaelTasksCompleted, null);
 	}
 
 	public void saveConfigValues()
@@ -338,9 +338,15 @@ public class TuraelCounterPlugin extends Plugin
 	}
 
 
-//infobox and afk timer
+//infobox and afk timer, and initialisation delay
 @Subscribe
 public void onGameTick(GameTick tick) {
+
+	// initialisation
+	if (ticksSinceStartup < 5)
+	{
+		ticksSinceStartup++;
+	}
 
 	if (infoTimer != null && config.statTimeout() != 0)
 	{
@@ -358,10 +364,10 @@ public void onGameTick(GameTick tick) {
 	{
 		Duration elapsedAfkTime = Duration.between(elapsedAfkTimerStart, Instant.now());
 
-		if (elapsedAfkTime.compareTo(Duration.ofMinutes(1)) > 0)
+		if (elapsedAfkTime.compareTo(Duration.ofMinutes(2)) > 0)
 		{
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "AFK timer reached, ending Turael session", null);
-			log.info("1 minutes of slayer afk is reached");
+			log.info("2 minutes of slayer afk is reached");
 			isTimeTrackerActive = false;
 
 			//stop all timers

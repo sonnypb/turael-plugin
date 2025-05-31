@@ -17,14 +17,13 @@ import java.util.Timer;
 @Getter
 public class TimerHandler {
 
-    public enum TimerState
-    {
+    public enum TimerState {
         RUNNING,
         PAUSED,
         STOPPED
     }
 
-//    private long duration;
+    //    private long duration;
     private TimerState state;
     private Duration totalDuration;
     private Instant startTime;
@@ -35,8 +34,7 @@ public class TimerHandler {
 
 
     @Inject
-    protected  TimerHandler(TuraelCounterPlugin plugin, TuraelCounterConfig config)
-    {
+    protected TimerHandler(TuraelCounterPlugin plugin, TuraelCounterConfig config) {
         this.plugin = plugin;
         this.config = config;
         this.totalDuration = Duration.ZERO;
@@ -44,20 +42,18 @@ public class TimerHandler {
     }
 
     @Subscribe
-    protected void timerStarted()
-    {
+    protected void timerStarted() {
         if (this.state == TimerState.STOPPED)
             this.startTime = Instant.now();
 
-        else if (this.state == TimerState.PAUSED)
-        {
-//          calculate the paused time and update the start time
+        else if (this.state == TimerState.PAUSED) {
+            //          calculate the paused time and update the start time
             Instant now = Instant.now();
             Duration pausedDuration = Duration.between(this.pauseStartTime, now);
 
         }
-            //get duration from stopped timer
-//            this.totalDuration = this.config.turaelDuration();
+        //get duration from stopped timer
+        //            this.totalDuration = this.config.turaelDuration();
 
         this.state = TimerState.RUNNING;
         this.config.turaelTimerState(this.state);
@@ -66,8 +62,7 @@ public class TimerHandler {
     }
 
     @Subscribe
-    protected void timerPaused()
-    {
+    protected void timerPaused() {
         this.state = TimerState.PAUSED;
         this.pauseStartTime = Instant.now();
         this.config.turaelTimerState(this.state);
@@ -75,8 +70,7 @@ public class TimerHandler {
     }
 
     @Subscribe
-    protected void timerStopped()
-    {
+    protected void timerStopped() {
         this.state = TimerState.STOPPED;
         this.config.turaelTimerState(this.state);
 
@@ -89,17 +83,23 @@ public class TimerHandler {
         log.info("Timer state set to: " + this.state);
     }
 
-    public Duration getDuration()
-    {
+    public Duration getDuration() {
         return this.totalDuration;
     }
 
-    public void timerReset()
-    {
+    public void timerReset() {
         this.state = TimerState.STOPPED;
         this.config.turaelTimerState(this.state);
         this.totalDuration = Duration.ZERO;
         this.config.turaelDuration(this.totalDuration);
+    }
+
+    public String formatDuration()
+    {
+        long hours = this.totalDuration.toHours();
+        long minutes = this.totalDuration.toMinutes() % 60;
+        long seconds = this.totalDuration.getSeconds() % 60;
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
 }

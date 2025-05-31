@@ -227,8 +227,4 @@ public interface TuraelCounterConfig extends Config
 			hidden = true
 	)
 	void turaelTimerState(TimerHandler.TimerState turaelTimerState);
-
-
-
-
 }
