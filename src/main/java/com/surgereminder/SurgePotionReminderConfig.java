@@ -1,4 +1,4 @@
-package com.example;
+package com.surgereminder;
 
 import java.awt.Color;
 import net.runelite.client.config.Alpha;

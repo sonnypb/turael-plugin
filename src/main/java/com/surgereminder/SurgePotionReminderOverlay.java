@@ -1,6 +1,5 @@
-package com.example;
+package com.surgereminder;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
@@ -24,7 +23,7 @@ public class SurgePotionReminderOverlay extends OverlayPanel
     @Override
     public Dimension render(Graphics2D graphics)
     {
-        final String surgePotionMessage = "Surge potion is ready";
+        final String surgePotionMessage = "Surge potion is ready!";
         final int length = graphics.getFontMetrics().stringWidth(surgePotionMessage);
 
         panelComponent.getChildren().clear();

@@ -1,4 +1,4 @@
-package com.example;
+package com.surgereminder;
 
 import java.util.Timer;
 import java.util.TimerTask;

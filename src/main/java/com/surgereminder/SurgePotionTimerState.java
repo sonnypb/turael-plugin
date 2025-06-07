@@ -1,4 +1,4 @@
-package com.example;
+package com.surgereminder;
 
 public enum SurgePotionTimerState
 {

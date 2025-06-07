@@ -1,4 +1,4 @@
-package com.example;
+package com.surgereminder;
 
 import com.google.inject.Provides;
 import java.util.regex.Pattern;
@@ -37,7 +37,7 @@ public class SurgePotionReminderPlugin extends Plugin
 	private Client client;
 
 	public static final Pattern SURGE_POTION_AVAILABLE =
-			Pattern.compile("<col=[A-Fa-f\\d]+>You now feel capable of drinking another dose of surge potion\\.</col>");
+			Pattern.compile("<col=[A-Fa-f\\d]+>You now feel capable of drinking another dose of surge potion</col>\\.");
 
 	@Override
 	protected void startUp()
