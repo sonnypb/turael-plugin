@@ -1,7 +1,7 @@
 # DPS Threshold Alerts
 
 A RuneLite plugin that alerts the player when damage dealt to a target exceeds a configurable threshold.
-Helpful when alting at bosses!
+Helpful when alting bosses!
 
 ## Features
 
