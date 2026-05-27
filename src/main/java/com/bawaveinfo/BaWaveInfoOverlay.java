@@ -10,6 +10,9 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.ColorScheme;
+import java.awt.Color;
+import net.runelite.client.util.ColorUtil;
 
 public class BaWaveInfoOverlay extends Overlay {
     private final PanelComponent panelComponent = new PanelComponent();
@@ -32,8 +35,13 @@ public Dimension render(Graphics2D graphics)
     panelComponent.getChildren().clear();
 
     panelComponent.getChildren().add(TitleComponent.builder()
-            .text("Wave" + wave)
+            .text("Wave " + wave)
             .build());
+
+    panelComponent.setBackgroundColor(
+            ColorUtil.colorWithAlpha(new Color(20, 20, 20, 156), 180)
+    );
+    panelComponent.setPreferredSize(new Dimension(100, 0));
 
     WaveInfo info = plugin.getWaveInfo();
 
@@ -51,43 +59,31 @@ public Dimension render(Graphics2D graphics)
     panelComponent.getChildren().add(
             LineComponent.builder()
                     .left("Runners")
-                    .right(String.valueOf(info.runners()))
+                    .right(info.runners() + " / " + info.runnerReserves())
                     .build()
     );
 
     panelComponent.getChildren().add(
             LineComponent.builder()
                     .left("Healers")
-                    .right(String.valueOf(info.healers()))
+                    .right(info.healers() + " / " + info.healerReserves())
                     .build()
     );
 
     panelComponent.getChildren().add(
             LineComponent.builder()
                     .left("Fighters")
-                    .right(String.valueOf(info.fighters()))
+                    .right(info.fighters() + " / " + info.fighterReserves())
                     .build()
     );
 
     panelComponent.getChildren().add(
             LineComponent.builder()
                     .left("Rangers")
-                    .right(String.valueOf(info.rangers()))
-                    .build()
-    );
-
-    panelComponent.getChildren().add(
-            LineComponent.builder()
-                    .left("HR / FR / RR / RnR")
-                    .right(
-                            info.healerReserves() + " / " +
-                                    info.fighterReserves() + " / " +
-                                    info.rangerReserves() + " / " +
-                                    info.runnerReserves()
-                    )
+                    .right(info.rangers() + " / " + info.fighterReserves())
                     .build()
     );
 
     return panelComponent.render(graphics);
-}
+    }
 }
