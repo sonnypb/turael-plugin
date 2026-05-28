@@ -1,5 +1,5 @@
 # BA Wave Info
-- Displays role-specific wave information.
-- Shows runner counts for Defenders.
-- Shows healer and reserve counts for Healers.
-- Shows ranger and fighter counts for Attackers.
+- Displays role-specific wave information (BA Cheatsheet)
+- Shows runner counts + reserves for Defenders.
+- Shows healer counts + reserves for Healers.
+- Shows ranger and fighter counts + reserves for Attackers.
