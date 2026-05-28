@@ -96,8 +96,7 @@ public class BaWaveInfoOverlay extends Overlay {
             case COLLECTOR:
                 panelComponent.getChildren().add(
                         LineComponent.builder()
-                                .left("Collector tasks")
-                                .right("Eggs / callouts")
+                                .left("Collector")
                                 .build()
                 );
                 break;
