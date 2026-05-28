@@ -8,21 +8,11 @@ import net.runelite.client.config.ConfigItem;
 public interface BaWaveInfoConfig extends Config
 {
 	@ConfigItem(
-			keyName = "enableThresholdAlert",
-			name = "Enable Threshold Alerts",
-			description = "Enable alert when threshold is exceeded"
+			keyName = "showOverlay",
+			name = "Show Overlay",
+			description = "Toggle BA wave info overlay"
 	)
-	default boolean enableThresholdAlert() {
+	default boolean showOverlay() {
 		return true;
 	}
-	@ConfigItem(
-			keyName = "thresholdValue",
-			name = "Damage Threshold",
-			description = "Trigger alert when damage exceeds this"
-	)
-	default int thresholdValue()
-	{
-		return 40;
-	}
-
 }
