@@ -73,6 +73,22 @@ public class BaWaveInfoOverlay extends Overlay {
                                 .right(info.rangers() + " / " + info.rangerReserves())
                                 .build()
                 );
+
+                if (plugin.isTrackingSpawns()) {
+                    panelComponent.getChildren().add(
+                            LineComponent.builder()
+                                    .left("Remaining Fighters")
+                                    .right(String.valueOf(plugin.getFightersRemaining()))
+                                    .build()
+                    );
+
+                    panelComponent.getChildren().add(
+                            LineComponent.builder()
+                                    .left("Rangers Remaining")
+                                    .right(String.valueOf(plugin.getRangersRemaining()))
+                                    .build()
+                    );
+                }
                 break;
 
             case DEFENDER:
@@ -82,6 +98,15 @@ public class BaWaveInfoOverlay extends Overlay {
                                 .right(info.runners() + " / " + info.runnerReserves())
                                 .build()
                 );
+
+                if (plugin.isTrackingSpawns()) {
+                    panelComponent.getChildren().add(
+                            LineComponent.builder()
+                                    .left("Runners Remaining")
+                                    .right(String.valueOf(plugin.getRunnersRemaining()))
+                                    .build()
+                    );
+                }
                 break;
 
             case HEALER:
@@ -91,6 +116,15 @@ public class BaWaveInfoOverlay extends Overlay {
                                 .right(info.healers() + " / " + info.healerReserves())
                                 .build()
                 );
+
+                if (plugin.isTrackingSpawns()) {
+                    panelComponent.getChildren().add(
+                            LineComponent.builder()
+                                    .left("Healers Remaining")
+                                    .right(String.valueOf(plugin.getHealersRemaining()))
+                                    .build()
+                    );
+                }
                 break;
 
             case COLLECTOR:

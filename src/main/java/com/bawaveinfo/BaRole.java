@@ -7,3 +7,4 @@ public enum BaRole
     COLLECTOR,
     HEALER
 }
+

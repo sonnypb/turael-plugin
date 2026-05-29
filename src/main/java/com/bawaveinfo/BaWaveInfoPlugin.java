@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
+import net.runelite.api.NPC;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
@@ -14,6 +15,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.events.NpcSpawned;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,6 +38,11 @@ public class BaWaveInfoPlugin extends Plugin
 	private BaWaveInfoOverlay overlay;
 	private int currentWave = -1;
 	private BaRole currentRole;
+	private int runnersRemaining;
+	private int healersRemaining;
+	private int fightersRemaining;
+	private int rangersRemaining;
+	private static final Pattern BA_WAVE_PATTERN = Pattern.compile("Wave:\\s*(\\d+)");
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -63,18 +70,13 @@ public class BaWaveInfoPlugin extends Plugin
 			return;
 		}
 
-		if (!event.getKey().equals("showOverlay"))
-		{
-			return;
-		}
-
-		if (config.showOverlay())
-		{
-			overlayManager.add(overlay);
-		}
-		else
-		{
-			overlayManager.remove(overlay);
+		if (event.getKey().equals("showOverlay")) {
+			if (config.showOverlay())
+			{
+				overlayManager.add(overlay);
+			} else {
+				overlayManager.remove(overlay);
+			}
 		}
 	}
 
@@ -131,6 +133,37 @@ public class BaWaveInfoPlugin extends Plugin
 		updateRole();
 	}
 
+	// Maybe make this a bit more nuanced later, it will do for now
+	// Logic for showing number of remaining spawns
+	@Subscribe
+	public void onNpcSpawned(NpcSpawned event)
+	{
+		if (!config.trackSpawns() || currentWave <= 0)
+		{
+			return;
+		}
+
+		NPC npc = event.getNpc();
+		int npcId = npc.getId();
+
+		if (NpcData.HEALER_NPCS.contains(npcId))
+		{
+			healersRemaining--;
+		}
+		else if (NpcData.RUNNER_NPCS.contains(npcId))
+		{
+			runnersRemaining--;
+		}
+		else if (NpcData.FIGHTER_NPCS.contains(npcId))
+		{
+			fightersRemaining--;
+		}
+		else if (NpcData.RANGER_NPCS.contains(npcId))
+		{
+			rangersRemaining--;
+		}
+	}
+
 	private void extractWave(String message)
 	{
 
@@ -139,11 +172,12 @@ public class BaWaveInfoPlugin extends Plugin
 			return;
 		}
 
-		Matcher m = Pattern.compile("Wave:\\s*(\\d+)").matcher(message);
+		Matcher waveMatcher = BA_WAVE_PATTERN.matcher(message);
 
-		if (m.find())
+		if (waveMatcher.find())
 		{
-			currentWave = Integer.parseInt(m.group(1));
+			currentWave = Integer.parseInt(waveMatcher.group(1));
+			startWaveState();
 			log.info("Detected BA wave: {}", currentWave);
 		}
 	}
@@ -212,8 +246,45 @@ public class BaWaveInfoPlugin extends Plugin
 		}
 	}
 
+	private void startWaveState()
+	{
+		WaveInfo info = WaveData.get(currentWave);
 
+		if (info == null)
+		{
+			return;
+		}
 
+		runnersRemaining = info.runners();
+		healersRemaining = info.healers();
+		fightersRemaining = info.fighters();
+		rangersRemaining = info.rangers();
+	}
+
+	public int getFightersRemaining()
+	{
+		return fightersRemaining;
+	}
+
+	public int getRunnersRemaining()
+	{
+		return runnersRemaining;
+	}
+
+	public int getHealersRemaining()
+	{
+		return healersRemaining;
+	}
+
+	public int getRangersRemaining()
+	{
+		return rangersRemaining;
+	}
+
+	public boolean isTrackingSpawns()
+	{
+		return config.trackSpawns();
+	}
 
 	@Provides
 	BaWaveInfoConfig provideConfig(ConfigManager configManager)

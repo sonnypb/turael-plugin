@@ -15,4 +15,14 @@ public interface BaWaveInfoConfig extends Config
 	default boolean showOverlay() {
 		return true;
 	}
+
+	@ConfigItem(
+			keyName = "trackSpawns",
+			name = "Track NPC Spawns",
+			description = "Decrease counts as NPCs spawn during the wave"
+	)
+	default boolean trackSpawns()
+	{
+		return true;
+	}
 }
