@@ -42,6 +42,7 @@ public class BaWaveInfoPlugin extends Plugin
 	private int healersRemaining;
 	private int fightersRemaining;
 	private int rangersRemaining;
+	private boolean inBaSession;
 	private static final Pattern BA_WAVE_PATTERN = Pattern.compile("Wave:\\s*(\\d+)");
 	@Override
 	protected void startUp() throws Exception
@@ -114,10 +115,15 @@ public class BaWaveInfoPlugin extends Plugin
 			return;
 		}
 
+		// check which wave you're on to load overlay
 		if (message.contains("Wave"))
 		{
 			extractWave(message);
 		}
+
+		// end of BA run
+		handleBaCompletion(message);
+
 	}
 
 	@Subscribe
@@ -248,17 +254,30 @@ public class BaWaveInfoPlugin extends Plugin
 
 	private void startWaveState()
 	{
-		WaveInfo info = WaveData.get(currentWave);
+		WaveInfo waveData = WaveData.get(currentWave);
 
-		if (info == null)
+		if (waveData == null)
 		{
 			return;
 		}
 
-		runnersRemaining = info.runners();
-		healersRemaining = info.healers();
-		fightersRemaining = info.fighters();
-		rangersRemaining = info.rangers();
+		inBaSession = true;
+
+		runnersRemaining = waveData.runners() + waveData.runnerReserves();
+		rangersRemaining = waveData.rangers()+ waveData.rangerReserves();
+		fightersRemaining = waveData.fighters() + waveData.fighterReserves();
+		healersRemaining = waveData.healers() + waveData.healerReserves();
+	}
+
+	private void handleBaCompletion(String message)
+	{
+		if (message.contains("Wave 10 duration: "))
+		{
+			log.info("Wave 10 completed, resetting state");
+			currentWave = -1;
+			currentRole = null;
+			inBaSession = false;
+		}
 	}
 
 	public int getFightersRemaining()
@@ -284,6 +303,11 @@ public class BaWaveInfoPlugin extends Plugin
 	public boolean isTrackingSpawns()
 	{
 		return config.trackSpawns();
+	}
+
+	public boolean isInBaSession()
+	{
+		return inBaSession;
 	}
 
 	@Provides

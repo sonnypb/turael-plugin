@@ -9,9 +9,7 @@ import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.TitleComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import net.runelite.client.ui.overlay.OverlayPosition;
-import net.runelite.client.ui.overlay.OverlayLayer;
 import java.awt.Color;
-import net.runelite.client.util.ColorUtil;
 
 public class BaWaveInfoOverlay extends Overlay {
     private final PanelComponent panelComponent = new PanelComponent();
@@ -22,14 +20,18 @@ public class BaWaveInfoOverlay extends Overlay {
     @Inject
     public BaWaveInfoOverlay() {
         setPosition(OverlayPosition.TOP_LEFT);
-        setLayer(OverlayLayer.ABOVE_WIDGETS);
-
-        panelComponent.setBackgroundColor(ColorUtil.colorWithAlpha(new Color(20, 20, 20, 156), 180));
+        panelComponent.setBackgroundColor(new Color(0x88212121, true));
         panelComponent.setPreferredSize(new Dimension(100, 0));
     }
 
     @Override
     public Dimension render(Graphics2D graphics) {
+
+        if (!plugin.isInBaSession())
+        {
+            return null;
+        }
+
         panelComponent.getChildren().clear();
 
         BaRole role = plugin.getCurrentRole();
