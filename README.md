@@ -1,5 +1,9 @@
 # BA Wave Info
-- Displays role-specific wave information (BA Cheatsheet)
-- Shows runner counts + reserves for Defenders.
-- Shows healer counts + reserves for Healers.
-- Shows ranger and fighter counts + reserves for Attackers.
+- Displays Barbarian Assault wave info by role
+- Shows NPC spawns and reserves per wave
+- Optional tracking of remaining NPC spawns during waves
+
+Future work:
+- Improve healer tracking accuracy when NPCs leave and re-enter render distance
+    - Current limitation: reappearing NPCs can be counted as new spawns
+    - Potential solution: track NPC instances using a hashmap 
