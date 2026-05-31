@@ -19,7 +19,7 @@ public interface BaWaveInfoConfig extends Config
 	@ConfigItem(
 			keyName = "trackSpawns",
 			name = "Track NPC Spawns",
-			description = "Decrease counts as NPCs spawn during the wave"
+			description = "Shows remaining NPCs by decreasing counts as they spawn in each wave"
 	)
 	default boolean trackSpawns()
 	{

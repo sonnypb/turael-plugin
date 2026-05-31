@@ -44,6 +44,7 @@ public class BaWaveInfoPlugin extends Plugin
 	private int rangersRemaining;
 	private boolean inBaSession;
 	private static final Pattern BA_WAVE_PATTERN = Pattern.compile("Wave:\\s*(\\d+)");
+	private static final String BA_END_ROUND = "The Queen has arrived and you can no longer use the horn of glory!";
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -110,19 +111,18 @@ public class BaWaveInfoPlugin extends Plugin
 
 		String message = event.getMessage();
 
-		if (message == null)
+		// end of BA round
+		if (message.contains(BA_END_ROUND))
 		{
-			return;
+			handleBaCompletion(message);
 		}
 
-		// check which wave you're on to load overlay
+		// handle wave updates for overlay
 		if (message.contains("Wave"))
 		{
 			extractWave(message);
+			return;
 		}
-
-		// end of BA run
-		handleBaCompletion(message);
 
 	}
 
@@ -154,19 +154,31 @@ public class BaWaveInfoPlugin extends Plugin
 
 		if (NpcData.HEALER_NPCS.contains(npcId))
 		{
-			healersRemaining--;
+			if (healersRemaining > 0)
+			{
+				healersRemaining--;
+			}
 		}
 		else if (NpcData.RUNNER_NPCS.contains(npcId))
 		{
-			runnersRemaining--;
+			if (runnersRemaining > 0)
+			{
+				runnersRemaining--;
+			}
 		}
 		else if (NpcData.FIGHTER_NPCS.contains(npcId))
 		{
-			fightersRemaining--;
+			if (fightersRemaining > 0)
+			{
+				fightersRemaining--;
+			}
 		}
 		else if (NpcData.RANGER_NPCS.contains(npcId))
 		{
-			rangersRemaining--;
+			if (rangersRemaining > 0)
+			{
+				rangersRemaining--;
+			}
 		}
 	}
 
@@ -205,7 +217,6 @@ public class BaWaveInfoPlugin extends Plugin
 			{
 				continue;
 			}
-
 
 			if (!playerName.equals(playerWidget.getText()))
 			{
@@ -271,13 +282,15 @@ public class BaWaveInfoPlugin extends Plugin
 
 	private void handleBaCompletion(String message)
 	{
-		if (message.contains("Wave 10 duration: "))
-		{
 			log.info("Wave 10 completed, resetting state");
 			currentWave = -1;
 			currentRole = null;
 			inBaSession = false;
-		}
+
+			runnersRemaining = 0;
+			healersRemaining = 0;
+			rangersRemaining = 0;
+			fightersRemaining = 0;
 	}
 
 	public int getFightersRemaining()

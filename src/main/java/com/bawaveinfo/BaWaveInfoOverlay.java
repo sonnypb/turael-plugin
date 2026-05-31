@@ -79,14 +79,14 @@ public class BaWaveInfoOverlay extends Overlay {
                 if (plugin.isTrackingSpawns()) {
                     panelComponent.getChildren().add(
                             LineComponent.builder()
-                                    .left("Remaining Fighters")
+                                    .left("Fighters Left")
                                     .right(String.valueOf(plugin.getFightersRemaining()))
                                     .build()
                     );
 
                     panelComponent.getChildren().add(
                             LineComponent.builder()
-                                    .left("Rangers Remaining")
+                                    .left("Rangers Left")
                                     .right(String.valueOf(plugin.getRangersRemaining()))
                                     .build()
                     );
@@ -104,7 +104,7 @@ public class BaWaveInfoOverlay extends Overlay {
                 if (plugin.isTrackingSpawns()) {
                     panelComponent.getChildren().add(
                             LineComponent.builder()
-                                    .left("Runners Remaining")
+                                    .left("Runners Left")
                                     .right(String.valueOf(plugin.getRunnersRemaining()))
                                     .build()
                     );
@@ -122,7 +122,7 @@ public class BaWaveInfoOverlay extends Overlay {
                 if (plugin.isTrackingSpawns()) {
                     panelComponent.getChildren().add(
                             LineComponent.builder()
-                                    .left("Healers Remaining")
+                                    .left("Healers Left")
                                     .right(String.valueOf(plugin.getHealersRemaining()))
                                     .build()
                     );
