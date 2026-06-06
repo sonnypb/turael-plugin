@@ -1,14 +1,24 @@
 # DPS Threshold Alerts
 
-A RuneLite plugin that alerts the player when damage dealt to a target exceeds a configurable threshold.
-Helpful when alting bosses!
-
-Combine with a watchdog alert for brain off alting:
-If you combine it with a watchdog alert, you can receive a sound ping that tells you to off the boss on that account. 
-Add "Over threshold:" to your game message alert and choose a sound ID (I chose 1794 the tears of guthix sound).
+A RuneLite plugin that alerts you when damage dealt to a target exceeds a configurable threshold.
+Useful when alting bosses!
 
 ## Features
 
 - Tracks individual hits
 - Triggers an alert when damage exceeds your set threshold
 
+## Watchdog Integration
+
+For a more AFK-friendly setup, combine this plugin with Watchdog to play a sound whenever a hit exceeds your threshold.
+
+Add the following text to your Watchdog game message alert:
+
+```
+Over threshold:
+```
+
+Then choose your preferred sound ID (for example, 1794 for the Tears of Guthix sound effect).
+
+
+![Watchdog setup](assets/watchdogsetupexample.png)
