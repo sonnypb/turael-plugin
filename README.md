@@ -22,3 +22,7 @@ Then choose your preferred sound ID (for example, 1794 for the Tears of Guthix s
 
 
 ![Watchdog setup](assets/watchdogsetupexample.png)
+
+Make sure your game message notifications are enabled for the chatbox message to appear for watchdog!
+
+![Game Notification setup](assets/notificationsetupexample.png)
